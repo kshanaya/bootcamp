@@ -8,6 +8,10 @@ current_dir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI']="sqlite:///" + os.path.join(current_dir, 'data_base.sqlite3')
+UPLOAD_FOLDER= 'static/songs'
+app.config['UPLOAD_FOLDER']=UPLOAD_FOLDER
+
+
 
 db.init_app(app)
 app.app_context().push()
@@ -28,9 +32,15 @@ def home():
             if check_user.password==form_password:
                 
                 if check_user.user_type=='enduser':
-                    return redirect(url_for('enduser'))
+                    return redirect(url_for('enduser',id=check_user.id))
                 elif check_user.user_type=='artist':
-                    return redirect(url_for('artist'))
+                    
+                    check_artist=artist_check.query.filter_by(artist_id=check_user.id).first()#can also use (email=check_user.email)
+                    if check_artist.status==False:
+                        return "you are not yet verified"
+                    else:
+                        return redirect(url_for('artist', id=check_user.id))
+                    
                 elif check_user.user_type=='admin':
                     return redirect(url_for('admin'))
             
@@ -45,25 +55,39 @@ def home():
 
 
 
-@app.route('/enduser', methods=['GET']) 
-def enduser():
+@app.route('/enduser/<id>', methods=['GET']) 
+def enduser(id):
+    user_detail=user.query.filter_by(id=id).first()
     
-    return render_template('enduser.html')
+    return render_template('enduser.html',username=user_detail.username)
 
 
 
-@app.route('/artist', methods=['GET']) 
-def artist():
+@app.route('/artist/<id>', methods=['GET']) 
+def artist(id):
+    artist_detail=user.query.filter_by(id=id).first()
         
-    return render_template('artist.html')
+    return render_template('artist.html', artist_detail=artist_detail)
 
 
 
 
-@app.route('/admin', methods=['GET']) 
+@app.route('/admin', methods=['GET',"POST"]) 
 def admin():
     
-    return render_template('admin.html')
+    if request.method == "POST":
+        form_id = request.form['id']
+        form_status = request.form['status']
+
+        verify= artist_check.query.filter_by(artist_id=form_id).first()
+        if form_status == "T":
+            verify.status= True
+            db.session.commit()
+
+    
+    data=artist_check.query.filter_by(status=False).all()
+    
+    return render_template('admin.html', data=data)
 
 
 
@@ -120,7 +144,7 @@ def signup_artist():
             db.session.add(new_data)
             db.session.commit()
             
-            status= artist(artist_user_id=new_data.id)
+            status = artist_check(artist_id=new_data.id, username=new_data.username, email=new_data.email)#changed artist to artist_check since there was function def artist already in line 56
             db.session.add(status)
             db.session.commit()
         
@@ -130,6 +154,20 @@ def signup_artist():
         
         
     return render_template('signup_artist.html')
+
+
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    file=request.files['file']
+    
+    
+    file_path=os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+    file.save(file_path)
+    return f"File uploaded successfully: {file_path}"
+
+    
+
 
 
 
@@ -192,7 +230,7 @@ if __name__ == "__main__":
     
     db.create_all()
     
-    app.debug= True 
+    app.debug= True
     
     app.run()
     

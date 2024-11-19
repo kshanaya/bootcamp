@@ -24,9 +24,30 @@ class user(db.Model):
     user_type= db.Column(db.String)
     
     
-class artist(db.Model):
-    __tablename__ = 'artist'
+class artist_check(db.Model):
+    __tablename__ ="artist_check"
     id=db.Column(db.Integer, primary_key=True, autoincrement=True)
-    artist_user_id=db.Column(db.Integer)
+    artist_id=db.Column(db.Integer)
+    username=db.Column(db.String)
+    email=db.Column(db.String)
     status=db.Column(db.Boolean, default=False)
+    song_list=db.relationship('songs',secondary='artist_song_relationship')
+    
+    
+class artist_song_relatinship(db.Model):
+    __tablename__='artist_song_relationship'
+    song_id=db.Column(db.Integer, db.ForeignKey('songs.id'),primary_key=True)
+    artist_id2=db.Column(db.Integer, db.ForeignKey('artist_check.id'),primary_key=True)
+
+    
+    
+class songs(db.Model):
+    __tablename__='songs'
+    id= db.Column(db.Integer, primary_key=True, autoincrement =True)
+    title= db.Column(db.String)
+    likes= db.Column(db.Integer, default=0)
+    dislikes=db.Column(db.Integer, default=0)
+    genre=db.Column(db.String)
+    url=db.Column(db.String)
+    song_artist= db.relationship('artist_check', secondary='artist_song_relationship')
     

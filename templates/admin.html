@@ -3,12 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>admin</title>
 </head>
 <body>
     <a href="/">home</a>
     
     <h1>Admin page</h1>
+
+    {%for i in data%}
+    <p>{{i.username}}</p>
+    <form action="/admin" method="POST">
+        <input type="text" name='id' value= {{ i.artist_id }} hidden>
+        <input type="radio" name="status" value="T">
+        <label> Approve</label>
+        <input type="radio" name="status" value="F">
+        <label> Decline</label>
+        <input type="submit">
+    {% endfor %}
     
 </body>
 </html>
